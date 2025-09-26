@@ -22,6 +22,7 @@ gem 'pretender'
 gem 'puma', '6.4.2'
 gem 'rack-cors', :require => 'rack/cors'
 gem 'rails', '8.0.0.rc1'
+gem 'oauth2'
 gem 'redis'
 gem 'rename', '1.1.3', git: 'https://github.com/ryanckulp/rename' # remove this gem after use
 gem 'split', require: 'split/dashboard'

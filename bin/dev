@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Clean up any existing Redis processes
+echo "Cleaning up any existing Redis processes..."
+pkill -f redis-server || true
+
 if ! gem list foreman -i --silent; then
   echo "Installing foreman..."
   gem install foreman

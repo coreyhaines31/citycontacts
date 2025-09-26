@@ -52,7 +52,7 @@ Rails.application.configure do
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   # config.active_job.queue_adapter = :resque
-  # config.active_job.queue_name_prefix = "speedrail_production"
+  # config.active_job.queue_name_prefix = "citycontacts_production"
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

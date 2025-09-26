@@ -10,9 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_04_11_204440) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_30_043522) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.string "name", null: false
@@ -61,6 +61,13 @@ ActiveRecord::Schema[7.2].define(version: 2024_04_11_204440) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cities", force: :cascade do |t|
+    t.string "name"
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer "priority", default: 0, null: false
     t.integer "attempts", default: 0, null: false
@@ -95,6 +102,31 @@ ActiveRecord::Schema[7.2].define(version: 2024_04_11_204440) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "social_connections", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "city_id", null: false
+    t.string "name"
+    t.string "profile_picture"
+    t.string "social_media_type"
+    t.string "social_media_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_id"], name: "index_social_connections_on_city_id"
+    t.index ["user_id"], name: "index_social_connections_on_user_id"
+  end
+
+  create_table "user_social_profiles", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "social_media_type"
+    t.string "access_token"
+    t.string "refresh_token"
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "social_media_user_id"
+    t.index ["user_id"], name: "index_user_social_profiles_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -113,4 +145,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_04_11_204440) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "social_connections", "cities"
+  add_foreign_key "social_connections", "users"
+  add_foreign_key "user_social_profiles", "users"
 end

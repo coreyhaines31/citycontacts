@@ -3,6 +3,15 @@ class User < ApplicationRecord
   include Onboardable
   include Billable
 
+  # Include default devise modules. Others available are:
+  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
+  devise :database_authenticatable, :registerable,
+         :recoverable, :rememberable, :validatable
+
+  has_many :social_connections
+  has_many :cities, through: :social_connections
+  has_many :user_social_profiles
+
   scope :subscribed, -> { where.not(stripe_subscription_id: [nil, '']) }
 
   # :nocov:

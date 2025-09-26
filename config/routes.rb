@@ -3,7 +3,13 @@ Rails.application.routes.draw do
 
   root 'pages#home'
 
-  devise_for :users, path: '', path_names: { sign_in: 'login', sign_up: 'signup' }, controllers: { registrations: 'registrations' }
+  devise_for :users, 
+    path: '', 
+    path_names: { sign_in: 'login', sign_up: 'signup' }, 
+    controllers: { 
+      registrations: 'registrations' 
+    }
+  
   get 'logout', to: 'pages#logout', as: 'logout'
 
   resources :subscribe, only: [:index]
@@ -13,6 +19,13 @@ Rails.application.routes.draw do
   end
   resources :billing_portal, only: [:new, :create]
   resources :blog_posts, controller: :blog_posts, path: "blog", param: :slug
+  resources :social_connections, only: [] do
+    delete 'disconnect/:provider', to: 'social_connections#disconnect', as: :disconnect, on: :collection
+  end
+
+  # Twitter OAuth
+  get '/auth/twitter', to: 'twitter_auth#request_authorization', as: 'twitter_login'
+  get '/auth/twitter/callback', to: 'twitter_auth#callback', as: 'twitter_callback'
 
   # static pages
   pages = %w[
