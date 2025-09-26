@@ -55,11 +55,15 @@ class SocialConnectionsController < ApplicationController
       # Use Apify to get real followers/following data with locations!
       apify_service = ApifyScraperService.new
 
+      # Get follower/following limits from form parameters
+      max_followers = params[:max_followers]&.to_i || 1000
+      max_following = params[:max_following]&.to_i || 0
+
       # Scrape actual followers with their location data
-      followers_locations = apify_service.scrape_twitter_followers(username, max_followers: 50)
+      followers_locations = apify_service.scrape_twitter_followers(username, max_followers: max_followers)
 
       # Note: For following, we'd use a different method when available
-      # following_locations = apify_service.scrape_twitter_following(username, max_following: 50)
+      # following_locations = apify_service.scrape_twitter_following(username, max_following: max_following)
       following_locations = [] # Placeholder for now
 
       # Store the scraped data
