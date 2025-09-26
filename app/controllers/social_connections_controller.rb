@@ -52,12 +52,17 @@ class SocialConnectionsController < ApplicationController
     end
 
     begin
-      service = ScrapeCreatorsService.new
+      # Use Apify to get real followers/following data with locations!
+      apify_service = ApifyScraperService.new
 
-      # Get user's profile location (Note: ScrapeCreators doesn't have followers/following endpoints)
-      user_locations = service.get_user_location_comprehensive(username)
+      # Scrape actual followers with their location data
+      followers_locations = apify_service.scrape_twitter_followers(username, max_followers: 50)
 
-      # Store the scraped data temporarily or create a profile record
+      # Note: For following, we'd use a different method when available
+      # following_locations = apify_service.scrape_twitter_following(username, max_following: 50)
+      following_locations = [] # Placeholder for now
+
+      # Store the scraped data
       profile = current_user.user_social_profiles.find_or_create_by(
         social_media_type: 'twitter_manual'
       ) do |p|
@@ -66,26 +71,35 @@ class SocialConnectionsController < ApplicationController
       end
 
       profile.update!(
-        followers_locations: user_locations,
-        following_locations: [], # Empty since we can't get actual followers/following
+        followers_locations: followers_locations || [],
+        following_locations: following_locations || [],
         last_scraped_at: Time.current,
         twitter_username: username
       )
 
-      if user_locations.any?
+      all_locations = (followers_locations + following_locations).flatten.uniq.compact
+
+      if all_locations.any?
         # Create city records
-        user_locations.each do |location|
-          City.find_or_create_by(name: location.strip.titleize)
+        all_locations.each do |location|
+          City.find_or_create_by(name: location.strip.titleize) rescue nil
         end
 
-        redirect_to account_index_path, notice: "Successfully found #{user_locations.size} location(s) from @#{username}'s profile and tweets!"
+        redirect_to account_index_path, notice: "🎉 Successfully scraped #{all_locations.size} locations from @#{username}'s followers! Found real follower location data."
       else
-        redirect_to account_index_path, alert: "No location data found in @#{username}'s profile or recent tweets."
+        redirect_to account_index_path, alert: "No location data found in @#{username}'s followers. They may have followers without location info in their profiles."
       end
 
     rescue => e
-      Rails.logger.error "Profile scraping error for #{username}: #{e.message}"
-      redirect_to account_index_path, alert: 'Failed to scrape profile. Please check the username and try again.'
+      Rails.logger.error "Apify scraping error for #{username}: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      # Check if it's an API token issue
+      if e.message.include?('Apify API token not configured')
+        redirect_to account_index_path, alert: 'Apify API not configured. Please set up your API token first.'
+      else
+        redirect_to account_index_path, alert: 'Failed to scrape followers. Please check the username and try again.'
+      end
     end
   end
 
