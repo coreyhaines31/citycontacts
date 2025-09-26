@@ -12,36 +12,35 @@ class ScrapeCreatorsService
   def get_twitter_profile(username_or_url)
     response = self.class.get('/twitter/profile', {
       headers: headers,
-      query: { user: username_or_url }
+      query: { handle: username_or_url }
     })
 
     handle_response(response)
   end
 
-  # Get Twitter user's followers with location data
+  # Get Twitter user's tweets to analyze mention patterns for location clues
+  def get_twitter_tweets(username_or_url, limit: 100)
+    response = self.class.get('/twitter/user-tweets', {
+      headers: headers,
+      query: {
+        handle: username_or_url,
+        limit: limit
+      }
+    })
+
+    handle_response(response)
+  end
+
+  # Note: ScrapeCreators doesn't have followers/following endpoints
+  # These methods are placeholders for the existing interface
   def get_twitter_followers(username_or_url, limit: 100)
-    response = self.class.get('/twitter/followers', {
-      headers: headers,
-      query: {
-        user: username_or_url,
-        limit: limit
-      }
-    })
-
-    handle_response(response)
+    # Fallback: get profile data instead
+    get_twitter_profile(username_or_url)
   end
 
-  # Get Twitter user's following with location data
   def get_twitter_following(username_or_url, limit: 100)
-    response = self.class.get('/twitter/following', {
-      headers: headers,
-      query: {
-        user: username_or_url,
-        limit: limit
-      }
-    })
-
-    handle_response(response)
+    # Fallback: get profile data instead
+    get_twitter_profile(username_or_url)
   end
 
   # Extract location data from followers/following
@@ -57,20 +56,45 @@ class ScrapeCreatorsService
     locations.uniq
   end
 
-  # Get followers' locations for a Twitter user
+  # Get user's location from their profile (since followers/following not available)
   def get_followers_locations(username_or_url, limit: 100)
-    followers_data = get_twitter_followers(username_or_url, limit: limit)
-    return [] unless followers_data.success?
+    profile_data = get_twitter_profile(username_or_url)
+    return [] unless profile_data.success?
 
-    extract_locations_from_users(followers_data.data)
+    # Extract location from the user's own profile
+    location = extract_location_from_user(profile_data.data)
+    location ? [location] : []
   end
 
-  # Get following users' locations for a Twitter user
+  # Get user's location from their profile (since followers/following not available)
   def get_following_locations(username_or_url, limit: 100)
-    following_data = get_twitter_following(username_or_url, limit: limit)
-    return [] unless following_data.success?
+    profile_data = get_twitter_profile(username_or_url)
+    return [] unless profile_data.success?
 
-    extract_locations_from_users(following_data.data)
+    # Extract location from the user's own profile
+    location = extract_location_from_user(profile_data.data)
+    location ? [location] : []
+  end
+
+  # Enhanced method to get location from profile and tweets
+  def get_user_location_comprehensive(username_or_url)
+    locations = []
+
+    # Get location from profile
+    profile_data = get_twitter_profile(username_or_url)
+    if profile_data.success?
+      profile_location = extract_location_from_user(profile_data.data)
+      locations << profile_location if profile_location
+    end
+
+    # Get location clues from recent tweets
+    tweets_data = get_twitter_tweets(username_or_url, limit: 20)
+    if tweets_data.success? && tweets_data.data.is_a?(Array)
+      tweet_locations = extract_locations_from_tweets(tweets_data.data)
+      locations.concat(tweet_locations)
+    end
+
+    locations.uniq.compact
   end
 
   private
@@ -83,6 +107,8 @@ class ScrapeCreatorsService
   end
 
   def handle_response(response)
+    Rails.logger.info "ScrapeCreators API Response: #{response.code} - #{response.body[0..500]}"
+
     case response.code
     when 200
       OpenStruct.new(
@@ -106,15 +132,55 @@ class ScrapeCreatorsService
       OpenStruct.new(
         success?: false,
         data: nil,
-        error: "API error: #{response.code} - #{response.message}"
+        error: "API error: #{response.code} - #{response.message} - #{response.body}"
       )
     end
   rescue => e
+    Rails.logger.error "ScrapeCreators API Request Error: #{e.message}"
     OpenStruct.new(
       success?: false,
       data: nil,
       error: "Request failed: #{e.message}"
     )
+  end
+
+  def extract_locations_from_tweets(tweets_data)
+    return [] unless tweets_data.is_a?(Array)
+
+    locations = []
+    tweets_data.each do |tweet|
+      next unless tweet.is_a?(Hash)
+
+      tweet_text = tweet['text'] || tweet['content'] || ''
+      location_matches = extract_locations_from_text(tweet_text)
+      locations.concat(location_matches)
+    end
+
+    locations.uniq.compact
+  end
+
+  def extract_locations_from_text(text)
+    return [] if text.blank?
+
+    locations = []
+
+    # Location patterns in tweets
+    location_patterns = [
+      /\b(?:at|in|from|visiting|traveling to|live in|based in)\s+([A-Z][a-zA-Z\s,]+?)(?:\s|$|[.!?])/i,
+      /📍\s*([A-Za-z\s,]+)/,  # Location emoji
+      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*([A-Z]{2}|[A-Za-z\s]+)/  # City, State/Country
+    ]
+
+    location_patterns.each do |pattern|
+      matches = text.scan(pattern)
+      matches.each do |match|
+        location = match.is_a?(Array) ? match.first : match
+        cleaned = clean_location(location)
+        locations << cleaned if cleaned
+      end
+    end
+
+    locations
   end
 
   def extract_location_from_user(user)

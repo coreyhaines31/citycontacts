@@ -80,8 +80,8 @@
 
     <!-- Manual Twitter Profile Scraping -->
     <div class="mt-6 p-4 border border-gray-300 rounded-md bg-gray-50">
-      <h4 class="text-lg font-medium text-gray-900 mb-2">Or Scrape Any Twitter Profile</h4>
-      <p class="text-sm text-gray-600 mb-4">Enter a Twitter URL or username to scrape follower/following locations without connecting your account.</p>
+      <h4 class="text-lg font-medium text-gray-900 mb-2">Scrape Twitter Profile Location</h4>
+      <p class="text-sm text-gray-600 mb-4">Enter a Twitter URL or username to extract location data from their profile and recent tweets.</p>
 
       <%= form_with url: scrape_profile_social_connections_path, method: :post, local: true, class: "space-y-3" do |form| %>
         <div>
@@ -97,7 +97,7 @@
 
       <div class="mt-2 text-xs text-gray-500">
         <p>Examples: twitter.com/elonmusk, @elonmusk, elonmusk</p>
-        <p>No authentication required - scrapes public data only.</p>
+        <p>Extracts location from profile bio and recent tweets - no authentication required.</p>
       </div>
     </div>
   </div>

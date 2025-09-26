@@ -54,9 +54,8 @@ class SocialConnectionsController < ApplicationController
     begin
       service = ScrapeCreatorsService.new
 
-      # Get follower locations directly without OAuth
-      followers_locations = service.get_followers_locations(username, limit: 50)
-      following_locations = service.get_following_locations(username, limit: 50)
+      # Get user's profile location (Note: ScrapeCreators doesn't have followers/following endpoints)
+      user_locations = service.get_user_location_comprehensive(username)
 
       # Store the scraped data temporarily or create a profile record
       profile = current_user.user_social_profiles.find_or_create_by(
@@ -67,23 +66,21 @@ class SocialConnectionsController < ApplicationController
       end
 
       profile.update!(
-        followers_locations: followers_locations,
-        following_locations: following_locations,
+        followers_locations: user_locations,
+        following_locations: [], # Empty since we can't get actual followers/following
         last_scraped_at: Time.current,
         twitter_username: username
       )
 
-      all_locations = (followers_locations + following_locations).flatten.uniq.compact
-
-      if all_locations.any?
+      if user_locations.any?
         # Create city records
-        all_locations.each do |location|
+        user_locations.each do |location|
           City.find_or_create_by(name: location.strip.titleize)
         end
 
-        redirect_to account_index_path, notice: "Successfully scraped #{all_locations.size} locations from @#{username}!"
+        redirect_to account_index_path, notice: "Successfully found #{user_locations.size} location(s) from @#{username}'s profile and tweets!"
       else
-        redirect_to account_index_path, alert: "No location data found for @#{username}. They may have no followers/following with location info."
+        redirect_to account_index_path, alert: "No location data found in @#{username}'s profile or recent tweets."
       end
 
     rescue => e
