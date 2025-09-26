@@ -5,9 +5,26 @@ class UserSocialProfile < ApplicationRecord
   validates :access_token, presence: true
   validates :user_id, uniqueness: { scope: :social_media_type }
 
-  # Serialize location arrays for storage
-  serialize :followers_locations, coder: Array
-  serialize :following_locations, coder: Array
+  # Store location arrays as JSON
+  def followers_locations
+    JSON.parse(read_attribute(:followers_locations) || '[]')
+  rescue JSON::ParserError
+    []
+  end
+
+  def followers_locations=(value)
+    write_attribute(:followers_locations, value.to_json)
+  end
+
+  def following_locations
+    JSON.parse(read_attribute(:following_locations) || '[]')
+  rescue JSON::ParserError
+    []
+  end
+
+  def following_locations=(value)
+    write_attribute(:following_locations, value.to_json)
+  end
 
   # Check if location data needs updating (older than 24 hours)
   def location_data_stale?
