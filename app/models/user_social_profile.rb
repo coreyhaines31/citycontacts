@@ -6,8 +6,8 @@ class UserSocialProfile < ApplicationRecord
   validates :user_id, uniqueness: { scope: :social_media_type }
 
   # Serialize location arrays for storage
-  serialize :followers_locations, Array
-  serialize :following_locations, Array
+  serialize :followers_locations, coder: Array
+  serialize :following_locations, coder: Array
 
   # Check if location data needs updating (older than 24 hours)
   def location_data_stale?
