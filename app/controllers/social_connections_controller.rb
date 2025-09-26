@@ -39,7 +39,7 @@ class SocialConnectionsController < ApplicationController
     twitter_url = params[:twitter_url]&.strip
 
     if twitter_url.blank?
-      redirect_to account_path, alert: 'Please enter a Twitter profile URL.'
+      redirect_to account_index_path, alert: 'Please enter a Twitter profile URL.'
       return
     end
 
@@ -47,7 +47,7 @@ class SocialConnectionsController < ApplicationController
     username = extract_username_from_url(twitter_url)
 
     if username.blank?
-      redirect_to account_path, alert: 'Invalid Twitter URL format. Please use format: https://twitter.com/username'
+      redirect_to account_index_path, alert: 'Invalid Twitter URL format. Please use format: https://twitter.com/username'
       return
     end
 
@@ -81,14 +81,14 @@ class SocialConnectionsController < ApplicationController
           City.find_or_create_by(name: location.strip.titleize)
         end
 
-        redirect_to account_path, notice: "Successfully scraped #{all_locations.size} locations from @#{username}!"
+        redirect_to account_index_path, notice: "Successfully scraped #{all_locations.size} locations from @#{username}!"
       else
-        redirect_to account_path, alert: "No location data found for @#{username}. They may have no followers/following with location info."
+        redirect_to account_index_path, alert: "No location data found for @#{username}. They may have no followers/following with location info."
       end
 
     rescue => e
       Rails.logger.error "Profile scraping error for #{username}: #{e.message}"
-      redirect_to account_path, alert: 'Failed to scrape profile. Please check the username and try again.'
+      redirect_to account_index_path, alert: 'Failed to scrape profile. Please check the username and try again.'
     end
   end
 
