@@ -21,6 +21,8 @@ Rails.application.routes.draw do
   resources :blog_posts, controller: :blog_posts, path: "blog", param: :slug
   resources :social_connections, only: [] do
     delete 'disconnect/:provider', to: 'social_connections#disconnect', as: :disconnect, on: :collection
+    post :refresh_locations, on: :collection
+    post :create_city_connections, on: :collection
   end
 
   # Twitter OAuth

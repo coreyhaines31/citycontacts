@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_30_043522) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_26_040420) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -124,6 +124,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_30_043522) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "social_media_user_id"
+    t.text "followers_locations"
+    t.text "following_locations"
+    t.datetime "last_scraped_at"
     t.index ["user_id"], name: "index_user_social_profiles_on_user_id"
   end
 

@@ -124,8 +124,12 @@ class TwitterAuthController < ApplicationController
       social_media_user_id: user_data['id'],
       access_token: token.token,
       refresh_token: token.refresh_token,
-      expires_at: token.expires_at ? Time.at(token.expires_at) : nil
+      expires_at: token.expires_at ? Time.at(token.expires_at) : nil,
+      twitter_username: user_data['username']
     )
     Rails.logger.info "Twitter profile saved successfully"
+
+    # Queue location data scraping job
+    LocationScrapingJob.perform_later(profile.id) if profile.persisted?
   end
 end 
