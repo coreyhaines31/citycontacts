@@ -95,7 +95,7 @@ class SocialConnectionsController < ApplicationController
   private
 
   def extract_username_from_url(url)
-    # Handle various Twitter URL formats
+    # Handle various Twitter/X URL formats
     if url.match?(/^@?\w+$/)
       # Just a username like "@username" or "username"
       return url.gsub(/^@/, '')
@@ -104,6 +104,10 @@ class SocialConnectionsController < ApplicationController
     # Full URL formats
     uri = URI.parse(url) rescue nil
     return nil unless uri
+
+    # Check if it's a Twitter/X domain
+    valid_hosts = ['twitter.com', 'www.twitter.com', 'x.com', 'www.x.com']
+    return nil unless valid_hosts.include?(uri.host&.downcase)
 
     # Extract from path like /username or /username/
     if uri.path&.match(%r{^/(\w+)/?$})
