@@ -23,6 +23,7 @@ Rails.application.routes.draw do
     delete 'disconnect/:provider', to: 'social_connections#disconnect', as: :disconnect, on: :collection
     post :refresh_locations, on: :collection
     post :create_city_connections, on: :collection
+    post :scrape_profile, on: :collection
   end
 
   # Twitter OAuth
